@@ -1,0 +1,133 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "srvcs-conevolume",
+    "description": "",
+    "license": {
+      "name": "Apache-2.0",
+      "identifier": "Apache-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [],
+        "summary": "`GET /` — service identity (srvcs service standard).",
+        "operationId": "index",
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Info"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [],
+        "summary": "`POST /` — compute the volume of a cone, `V = (1/3) * pi * r^2 * height`.",
+        "description": "This service owns the *control flow* but delegates every arithmetic step to\nits float primitives, exactly as specified:\n\n1. `p = pi()` — `srvcs-pi`, a constant service called with an empty body;\n2. `r2 = floatmultiply(radius, radius)`;\n3. `base = floatmultiply(p, r2)`;\n4. `col = floatmultiply(base, height)` — the volume of the enclosing\n   cylinder;\n5. `result = floatdivide(col, 3)`.\n\nIt never validates operands itself: any `422` a dependency raises (e.g. a\nnon-numeric radius) is forwarded verbatim. If a dependency is unreachable it\nreports itself degraded (`503`).",
+        "operationId": "evaluate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvalRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConeVolumeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "a dependency rejected an input (forwarded)"
+          },
+          "500": {
+            "description": "a dependency returned a malformed result"
+          },
+          "503": {
+            "description": "a dependency is unavailable"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ConeVolumeResponse": {
+        "type": "object",
+        "required": [
+          "radius",
+          "height",
+          "result"
+        ],
+        "properties": {
+          "height": {
+            "type": "object"
+          },
+          "radius": {
+            "type": "object"
+          },
+          "result": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      },
+      "EvalRequest": {
+        "type": "object",
+        "required": [
+          "radius",
+          "height"
+        ],
+        "properties": {
+          "height": {
+            "type": "object",
+            "description": "The height of the cone."
+          },
+          "radius": {
+            "type": "object",
+            "description": "The radius of the cone's circular base."
+          }
+        }
+      },
+      "Info": {
+        "type": "object",
+        "required": [
+          "service",
+          "concern",
+          "depends_on"
+        ],
+        "properties": {
+          "concern": {
+            "type": "string"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "service": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
